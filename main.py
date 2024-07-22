@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 import redis
 from urllib.parse import urlparse
 import os
@@ -31,29 +30,19 @@ def validate_redis_connection():
 # Validate connection at startup
 validate_redis_connection()
 
-# Pydantic model for request body
-class Item(BaseModel):
-    key: str
-    value: str
-
 @app.get("/")
 async def root():
     return {"greeting": "Hello, World!", "message": "Welcome to FastAPI!"}
 
-@app.post("/set")
-async def set_item(item: Item):
+@app.get("/rss")
+async def get_all_items():
     try:
-        redis_client.set(item.key, item.value)
-        return {"status": "success", "message": f"Key '{item.key}' set successfully"}
+        keys = redis_client.keys()
+        items = []
+        for key in keys:
+            value = redis_client.get(key)
+            items.append({"key": key, "value": value})
+        return items
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/get/{key}")
-async def get_item(key: str):
-    try:
-        value = redis_client.get(key)
-        if value is None:
-            raise HTTPException(status_code=404, detail="Key not found")
-        return {"status": "success", "key": key, "value": value}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error fetching items from Redis: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch items from Redis")
