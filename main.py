@@ -34,6 +34,7 @@ validate_redis_connection()
 async def root():
     return {"greeting": "Hello, World!", "message": "Welcome to FastAPI!"}
 
+
 @app.get("/rss")
 async def get_all_items():
     try:
