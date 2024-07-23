@@ -6,12 +6,17 @@ import os
 # Parse Redis URL from environment variable
 redis_url = os.getenv('REDIS_PRIVATE_URL', os.getenv('REDIS_URL'))
 parsed_url = urlparse(redis_url)
+redisuser = os.getenv("REDISUSER")
+redishost = os.getenv("REDISHOST")
+redisport = os.getenv("REDISPORT")
+redispassword = os.getenv("REDISPASSWORD")
 
 # Connect to Redis
 redis_client = redis.StrictRedis(
-    host=parsed_url.hostname,
-    port=parsed_url.port,
-    password=parsed_url.password,
+    host=redishost,
+    port=redisport,
+    password=redispassword,
+    username=redisuser,
     decode_responses=True
 )
 
