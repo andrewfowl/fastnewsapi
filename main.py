@@ -1,7 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
 from redis_client import init_redis_pool, close_redis_pool, redis
-from urllib.parse import urlparse
-import os
 from typing import List
 
 app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
