@@ -2,7 +2,7 @@ import aioredis
 from fastapi import FastAPI
 
 redis = None
-redisurl=os.get("REDIS_URL")
+redisurl=os.getenv("REDIS_URL")
 
 async def init_redis_pool():
     global redis
