@@ -9,7 +9,7 @@ app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
 async def get_redis():
     return redis
 
-@app.get("/data", response_model=List[str])
+@app.get("/rss", response_model=List[str])
 async def get_data(keys: List[str], redis=Depends(get_redis)):
     try:
         pipe = redis.pipeline()
