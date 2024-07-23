@@ -1,5 +1,6 @@
 import aioredis
 from fastapi import FastAPI
+import os
 
 redis = None
 redisurl=os.getenv("REDIS_URL")
