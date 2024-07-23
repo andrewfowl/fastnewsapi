@@ -1,54 +1,26 @@
-from fastapi import FastAPI, HTTPException
-import redis
+from fastapi import FastAPI, HTTPException, Depends
+from redis_client import init_redis_pool, close_redis_pool, redis
 from urllib.parse import urlparse
 import os
+from typing import List
 
-# Parse Redis URL from environment variable
-redis_url = os.getenv('REDIS_PRIVATE_URL', os.getenv('REDIS_URL'))
-parsed_url = urlparse(redis_url)
-redisuser = os.getenv("REDISUSER")
-redishost = os.getenv("REDISHOST")
-redisport = os.getenv("REDISPORT")
-redispassword = os.getenv("REDISPASSWORD")
+app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
 
-# Connect to Redis
-redis_client = redis.StrictRedis(
-    host=redishost,
-    port=redisport,
-    password=redispassword,
-    username=redisuser,
-    decode_responses=True
-)
+async def get_redis():
+    return redis
 
-# Initialize FastAPI app
-app = FastAPI()
-
-# Validate Redis connection
-def validate_redis_connection():
+@app.get("/data", response_model=List[str])
+async def get_data(keys: List[str], redis=Depends(get_redis)):
     try:
-        redis_client.ping()
-        print("Connected to Redis successfully")
-    except redis.ConnectionError as e:
-        print(f"Error connecting to Redis: {e}")
-        raise HTTPException(status_code=500, detail="Could not connect to Redis")
-
-# Validate connection at startup
-validate_redis_connection()
-
-@app.get("/")
-async def root():
-    return {"greeting": "Hello, World!", "message": "Welcome to FastAPI!"}
-
-
-@app.get("/rss")
-async def get_all_items():
-    try:
-        keys = redis_client.keys()
-        items = []
+        pipe = redis.pipeline()
         for key in keys:
-            value = redis_client.get(key)
-            items.append({"key": key, "value": value})
-        return items
+            pipe.get(key)
+        values = await pipe.execute()
+        return [value.decode('utf-8') for value in values if value]
     except Exception as e:
         print(f"Error fetching items from Redis: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch items from Redis")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
