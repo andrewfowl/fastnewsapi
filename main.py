@@ -34,7 +34,10 @@ async def get_data(
     
     return paginated_values
 
-
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import hypercorn.asyncio
+    from hypercorn.config import Config
+
+    config = Config()
+    config.bind = ["0.0.0.0:8000"]
+    hypercorn.asyncio.run(app, config)
