@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
 
 async def get_redis():
+    if redis_client is None:
+        raise HTTPException(status_code=500, detail="Redis client not initialized")
     return redis_client
 
 @app.get("/rss", response_model=List[str])
@@ -23,11 +25,16 @@ async def get_data(
 
     try:
         values = await redis.mget(keys)
+        logger.info(f"Values retrieved: {values}")
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-    decoded_values = [value.decode('utf-8') for value in values if value]
+    decoded_values = []
+    for value in values:
+        if value is not None:
+            decoded_values.append(value.decode('utf-8'))
+    
     paginated_values = paginate(decoded_values, page, page_size)
     logger.debug(f"Paginated values: {paginated_values}")
     
