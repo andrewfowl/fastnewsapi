@@ -1,5 +1,4 @@
-import aioredis
-from fastapi import FastAPI
+import redis.asyncio as aioredis
 import logging
 import os
 
@@ -8,13 +7,11 @@ redis = None
 redisurl=os.getenv("REDIS_URL")
 
 async def init_redis_pool():
-    global redis
-    redis = await aioredis.create_redis_pool(
-        redisurl, minsize=5, maxsize=10
-    )
+    global redis_client
+    redis_client = aioredis.Redis(host=redisurl, port=59564, db=0)
     logger.info("Redis connection pool created")
 
 async def close_redis_pool():
-    redis.close()
-    await redis.wait_closed()
+    await redis_client.close()
+    await redis_client.connection_pool.disconnect()
     logger.info("Redis connection pool closed")
