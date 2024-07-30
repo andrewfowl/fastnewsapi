@@ -3,8 +3,8 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
-redis = None
-redisurl=os.getenv("REDIS_URL")
+redis_client = None
+redisurl = os.getenv("REDIS_URL")
 
 async def init_redis_pool():
     global redis_client
