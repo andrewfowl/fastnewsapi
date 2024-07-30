@@ -13,6 +13,8 @@ async def init_redis_pool():
         return
     try:
         redis_client = aioredis.Redis.from_url(redisurl)
+        # Test the connection to ensure it's set up properly
+        await redis_client.ping()
         logger.info(f"Redis connection pool created for {redisurl}")
     except Exception as e:
         logger.error(f"Error creating Redis connection pool: {e}")
