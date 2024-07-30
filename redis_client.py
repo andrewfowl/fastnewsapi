@@ -8,7 +8,7 @@ redisurl = os.getenv("REDIS_URL")
 
 async def init_redis_pool():
     global redis_client
-    redis_client = aioredis.Redis(host=redisurl, port=6379, db=0)
+    redis_client = aioredis.Redis(host=redisurl)
     logger.info("Redis connection pool created")
 
 async def close_redis_pool():
