@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
-from redis_client import init_redis_pool, close_redis_pool, redis
+from redis_client import init_redis_pool, close_redis_pool, redis_client
 from pagination import paginate
 from typing import List
 import logging
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
 
 async def get_redis():
-    return redis
+    return redis_client
 
 @app.get("/rss", response_model=List[str])
 async def get_data(
@@ -19,11 +19,10 @@ async def get_data(
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
     redis=Depends(get_redis)
 ):
-    pipe = redis.pipeline()
-    for key in keys:
-        pipe.get(key)
+    logger.info(f"Received request for keys: {keys}, page: {page}, page_size: {page_size}")
+
     try:
-        values = await pipe.execute()
+        values = await redis.mget(keys)
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
