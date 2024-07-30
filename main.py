@@ -11,6 +11,7 @@ app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
 
 async def get_redis():
     if redis_client is None:
+        logger.error("Redis client not initialized when accessed")
         raise HTTPException(status_code=500, detail="Redis client not initialized")
     return redis_client
 
