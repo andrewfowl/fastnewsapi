@@ -4,12 +4,12 @@ import os
 
 logger = logging.getLogger(__name__)
 redis_client = None
-redisurl = os.getenv("REDIS_URL")
+redisurl = os.getenv("REDIS_PRIVATE_URL")
 
 async def init_redis_pool():
     global redis_client
     if redisurl is None:
-        logger.error("REDIS_URL environment variable not set")
+        logger.error("REDIS_PRIVATE_URL environment variable not set")
         return
     try:
         redis_client = aioredis.Redis.from_url(redisurl)
