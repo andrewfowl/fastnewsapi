@@ -7,7 +7,15 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(on_startup=[init_redis_pool], on_shutdown=[close_redis_pool])
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await init_redis_pool()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_redis_pool()
 
 async def get_redis():
     if redis_client is None:
