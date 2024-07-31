@@ -19,8 +19,7 @@ async def shutdown_event():
 
 async def get_redis():
     if redis_client is None:
-        logger.error("Redis client not initialized when accessed")
-        raise HTTPException(status_code=500, detail="Redis client not initialized")
+        await init_redis_pool()
     return redis_client
 
 @app.get("/rss", response_model=List[str])
