@@ -7,21 +7,17 @@ redis_url = os.getenv("REDIS_PRIVATE_URL")
 redis_port = os.getenv("REDISPORT")
 redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
+redis_client = None
 
-redis_client = aioredis.StrictRedis(
+async def init_redis_pool():
+    global redis_client
+    try:
+        redis_client = aioredis.StrictRedis(
         host=redis_host,
         port=redis_port,
         password=redis_pass,
         decode_responses=True
     )
-
-async def init_redis_pool():
-    global redis_client
-    if redis_url is None:
-        logger.error("REDIS_PRIVATE_URL environment variable not set")
-        return None
-    try:
-        redis_client = aioredis.from_url(redis_url)
         # Test the connection to ensure it's set up properly
         await redis_client.ping()
         logger.info(f"Redis client created for {redis_url}")
