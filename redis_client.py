@@ -3,7 +3,7 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
-redis_url = os.getenv("REDIS_PRIVATE_URL")
+redis_url = os.getenv("REDIS_URL")
 redis_port = os.getenv("REDISPORT")
 redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
