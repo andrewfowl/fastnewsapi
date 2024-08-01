@@ -1,4 +1,4 @@
-import redis.asyncio as aioredis
+import redis
 import logging
 import os
 
@@ -12,7 +12,7 @@ redis_client = None
 async def init_redis_pool():
     global redis_client
     try:
-        redis_client = aioredis.StrictRedis(
+        redis_client = redis.StrictRedis(
         host=redis_host,
         port=redis_port,
         password=redis_pass,
