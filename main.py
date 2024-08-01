@@ -1,13 +1,15 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
-from redis_client import init_redis_pool, close_redis_pool, redis_client
+from redis_client import init_redis_pool, close_redis_pool
 from pagination import paginate
 from typing import List
 import logging
 
 logging.basicConfig(level=logging.INFO)
+redis_client = None
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
 
 @app.on_event("startup")
 async def startup_event():
