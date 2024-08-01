@@ -9,6 +9,9 @@ redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 redis_client = None
 
+## redis_pool = redis.ConnectionPool( host=redis_host, port=redis_port, password=redis_pass, decode_responses=True, ssl_cert_reqs=none)
+## connection = redis.StrictRedis(connection_pool=redis_pool)
+
 def init_redis_pool():
     global redis_client
     try:
