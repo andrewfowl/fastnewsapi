@@ -8,7 +8,7 @@ redis_port = os.getenv("REDISPORT")
 redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 
-redis_client = redis.StrictRedis(
+redis_client = aioredis.StrictRedis(
         host=redis_host,
         port=redis_port,
         password=redis_pass,
