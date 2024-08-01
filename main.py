@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
-import redis_client
+from redis_client import init_redis_pool, close_redis_pool, redis_client
 from pagination import paginate
 from typing import List
 import logging
