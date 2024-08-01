@@ -1,4 +1,4 @@
-import redis
+import redis.asyncio as redis
 import logging
 import os
 
@@ -12,7 +12,7 @@ async def init_redis_pool():
         logger.error("REDIS_PRIVATE_URL environment variable not set")
         return
     try:
-        redis_client = redis.Redis(host=redisurl, db=1)
+        redis_client = redis.from_url(redisurl)
         # Test the connection to ensure it's set up properly
         await redis_client.ping()
         logger.info(f"Redis connection pool created for {redisurl}")
