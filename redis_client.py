@@ -1,19 +1,19 @@
-import redis.asyncio as redis
+import redis.asyncio as aioredis
 import logging
 import os
 
 logger = logging.getLogger(__name__)
-redisurl = os.getenv("REDIS_PRIVATE_URL")
+redis_url = os.getenv("REDIS_PRIVATE_URL")
 
 async def init_redis_pool():
-    if redisurl is None:
+    if redis_url is None:
         logger.error("REDIS_PRIVATE_URL environment variable not set")
         return
     try:
-        redis_client = redis.from_url(redisurl)
+        redis_client = aioredis.from_url(redis_url)
         # Test the connection to ensure it's set up properly
         await redis_client.ping()
-        logger.info(f"Redis connection pool created for {redisurl}")
+        logger.info(f"Redis client created for {redis_url}")
     except Exception as e:
         logger.error(f"Error creating Redis connection pool: {e}")
 
