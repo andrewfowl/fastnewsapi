@@ -10,20 +10,22 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 @app.on_event("startup")
-async def startup_event():
-    await init_redis_pool()
+def startup_event():
+    init_redis_pool()
 
 @app.on_event("shutdown")
-async def shutdown_event():
-    await close_redis_pool()
+def shutdown_event():
+    close_redis_pool()
 
-async def get_redis():
-    if not redis_client:
+def get_redis():
+    try:
+        return redis_client
+    except Exception as e:
         logger.error("Redis client not initialized when accessed")
-        raise HTTPException(status_code=500, detail="Redis client not initialized")
-    return redis_client
+        return
+        
 
-async def get_redis_connection(redis=Depends(get_redis)):
+def get_redis_connection(redis=Depends(get_redis)):
     try:
         yield redis
     finally:
@@ -39,7 +41,7 @@ async def get_data(
     logger.info(f"Received request for keys: {keys}, page: {page}, page_size: {page_size}")
 
     try:
-        values = await redis.mget(keys)
+        values = redis.mget(keys)
         logger.info(f"Values retrieved: {values}")
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
