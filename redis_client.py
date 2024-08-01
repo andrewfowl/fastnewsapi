@@ -32,4 +32,4 @@ def close_redis_pool():
             await redis_client.close()
             logger.info("Redis connection pool closed")
         except Exception as e:
-            logger.error(f"Error closing Redis connection pool: {e}"
+            logger.error(f"Error closing Redis connection pool: {e}")
