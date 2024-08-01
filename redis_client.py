@@ -29,7 +29,7 @@ def close_redis_pool():
         logger.warning("Redis client was not initialized, nothing to close")
     else:
         try:
-            await redis_client.close()
+            redis_client.close()
             logger.info("Redis connection pool closed")
         except Exception as e:
             logger.error(f"Error closing Redis connection pool: {e}")
