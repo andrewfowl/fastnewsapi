@@ -5,11 +5,9 @@ from typing import List
 import logging
 
 logging.basicConfig(level=logging.INFO)
-redis_client = None
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-
 
 @app.on_event("startup")
 async def startup_event():
