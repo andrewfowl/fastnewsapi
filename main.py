@@ -18,16 +18,23 @@ async def shutdown_event():
     await close_redis_pool()
 
 async def get_redis():
-    if redis_client is None:
-        await init_redis_pool()
+    if not redis_client:
+        logger.error("Redis client not initialized when accessed")
+        raise HTTPException(status_code=500, detail="Redis client not initialized")
     return redis_client
+
+async def get_redis_connection(redis=Depends(get_redis)):
+    try:
+        yield redis
+    finally:
+        pass  
 
 @app.get("/rss", response_model=List[str])
 async def get_data(
     keys: List[str] = Query(..., description="List of Redis keys to retrieve"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    redis=Depends(get_redis)
+    redis=Depends(get_redis_connection)
 ):
     logger.info(f"Received request for keys: {keys}, page: {page}, page_size: {page_size}")
 
