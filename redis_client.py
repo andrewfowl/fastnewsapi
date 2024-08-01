@@ -3,13 +3,17 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
+redis_url = os.getenv("REDIS_PRIVATE_URL")
+redis_port = os.getenv("REDISPORT")
+redis_host = os.getenv("REDISHOST")
+redis_pass = os.getenv("REDIS_PASSWORD")
+
 redis_client = redis.StrictRedis(
-        host=REDISHOST,
-        port=REDISPORT,
-        password=REDIS_PASSWORD,
+        host=redis_host,
+        port=redis_port,
+        password=redis_pass,
         decode_responses=True
     )
-redis_url = os.getenv("REDIS_PRIVATE_URL")
 
 async def init_redis_pool():
     global redis_client
