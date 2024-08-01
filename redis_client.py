@@ -16,7 +16,9 @@ def init_redis_pool():
         host=redis_host,
         port=redis_port,
         password=redis_pass,
-        decode_responses=True
+        decode_responses=True,
+        ssl_cert_reqs=none,
+        health_check_interval=2
     )
         logger.info(f"Redis client created for {redis_url}")
         return redis_client
