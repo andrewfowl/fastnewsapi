@@ -22,8 +22,6 @@ def get_redis():
         return redis_client
     except Exception as e:
         logger.error("Redis client not initialized when accessed")
-        return
-        
 
 def get_redis_connection(redis=Depends(get_redis)):
     try:
