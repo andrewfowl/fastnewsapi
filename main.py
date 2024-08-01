@@ -29,29 +29,18 @@ def get_redis_connection(redis=Depends(get_redis)):
     finally:
         pass  
 
-def get_combined_feed():
-    redis_client = redis.StrictRedis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        password=REDIS_PASSWORD,
-        decode_responses=True
-    )
-    keys = redis_client.smembers('rss_links')
-    feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
-    return feed_items
-
 @app.get("/rss", response_model=List[str])
 def get_data(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
     redis=Depends(get_redis_connection)
 ):
-    logger.info(f"Received request for keys: {keys}, page: {page}, page_size: {page_size}")
+    logger.info(f"Received request for page: {page}, page_size: {page_size}")
 
     try:
         keys = redis_client.smembers('rss_links')
         feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
-        logger.info(f"Values retrieved: {values}")
+        logger.info(f"Values retrieved: {feed_items}")
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -59,7 +48,7 @@ def get_data(
     decoded_values = []
     for item in feed_items:
         if item is not None:
-            decoded_values.append(value.decode('utf-8'))
+            decoded_values.append(item.decode('utf-8'))
     
     paginated_values = paginate(decoded_values, page, page_size)
     logger.debug(f"Paginated values: {paginated_values}")
