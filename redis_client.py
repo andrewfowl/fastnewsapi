@@ -15,7 +15,7 @@ async def init_redis_pool():
         await redis_client.ping()
         logger.info(f"Redis client created for {redis_url}")
     except Exception as e:
-        logger.error(f"Error creating Redis connection pool: {e}")
+        logger.error(f"Error creating Redis client: {e}")
 
 async def close_redis_pool():
     if redis_client is not None:
@@ -23,4 +23,4 @@ async def close_redis_pool():
         await redis_client.connection_pool.disconnect()
         logger.info("Redis connection pool closed")
     else:
-        logger.error("Redis client is not initialized")
+        return
