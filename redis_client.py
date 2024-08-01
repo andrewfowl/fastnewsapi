@@ -30,7 +30,7 @@ def init_redis_pool():
 
 def close_redis_pool():
     global redis_client
-    if redis_client is None:
+    if redis_client:
         logger.warning("Redis client was not initialized, nothing to close")
     else:
         try:
