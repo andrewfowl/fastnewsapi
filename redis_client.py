@@ -12,7 +12,6 @@ redis_client = redis.StrictRedis(
             port=redis_port,
             password=redis_pass,
             decode_responses=True,
-            ssl_cert_reqs=none,
             health_check_interval=2
         )
 ## redis_pool = redis.ConnectionPool( host=redis_host, port=redis_port, password=redis_pass, decode_responses=True, ssl_cert_reqs=none)
@@ -26,7 +25,6 @@ def init_redis_pool():
             port=redis_port,
             password=redis_pass,
             decode_responses=True,
-            ssl_cert_reqs=none,
             health_check_interval=2
         )
         logger.info(f"Redis client created for {redis_url}")
