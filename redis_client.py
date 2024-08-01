@@ -3,24 +3,33 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
+redis_client = None
 redis_url = os.getenv("REDIS_PRIVATE_URL")
 
 async def init_redis_pool():
+    global redis_client
     if redis_url is None:
         logger.error("REDIS_PRIVATE_URL environment variable not set")
-        return
+        return None
     try:
         redis_client = aioredis.from_url(redis_url)
         # Test the connection to ensure it's set up properly
         await redis_client.ping()
         logger.info(f"Redis client created for {redis_url}")
+        return redis_client
     except Exception as e:
         logger.error(f"Error creating Redis client: {e}")
+        redis_client = None
+        return None
 
 async def close_redis_pool():
+    global redis_client
     if redis_client is not None:
-        await redis_client.close()
-        await redis_client.connection_pool.disconnect()
-        logger.info("Redis connection pool closed")
+        try:
+            await redis_client.close()
+            await redis_client.connection_pool.disconnect()
+            logger.info("Redis connection pool closed")
+        except Exception as e:
+            logger.error(f"Error closing Redis connection pool: {e}")
     else:
-        return
+        logger.warning("Redis client was not initialized, nothing to close")
