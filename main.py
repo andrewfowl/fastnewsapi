@@ -42,13 +42,9 @@ async def rss(
     try:
         start = (page - 1) * page_size
         end = start + page_size - 1
-        feed_ids = await redis_client.zrevrange('rss_feed', start, end)
-        
+        feed_ids = redis_client.smembers('rss_links')
         feed_items = []
-        for feed_id in feed_ids:
-            feed_item = await redis_client.hgetall(f'rss_feed_item:{feed_id}')
-            feed_items.append(feed_item)
-
+        feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
         logger.info(f"Values retrieved: {feed_items}")
         return feed_items
     except (ConnectionError, DataError, RedisError, ResponseError) as e:
