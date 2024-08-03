@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import FastAPI, Depends, Query, HTTPException
 from redis_client import init_redis_pool, close_redis_pool
+from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
 from pagination import paginate
 from typing import List
@@ -8,29 +9,25 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+redis_connection = redis_client.redis_connection
 
 app = FastAPI()
 
 @app.on_event("startup")
-def startup_event():
-    init_redis_pool()
+async def startup_event():
+    await init_redis_pool()
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await close_redis_pool()
 
-def get_redis():
+def get_redis_connection():
     try:
-        return redis_client.redis_connection
+        yield redis_connection
     except Exception as e:
         logger.error(f"Redis connection not initialized when accessed. Error: {e}")
-
-def get_redis_connection(redis=Depends(get_redis)):
-    try:
-        yield redis
     finally:
-        pass  
-
+        pass
 
 @app.get("/rss", response_model=List[str])
 async def rss(
