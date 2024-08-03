@@ -6,7 +6,6 @@ import os
 logger = logging.getLogger(__name__)
 
 async def init_redis_pool():
-    global redis_connection, redis_pool
     redis_url = os.getenv("REDIS_URL")
     redis_port = os.getenv("REDISPORT")
     redis_host = os.getenv("REDISHOST")
@@ -21,8 +20,7 @@ async def init_redis_pool():
     except Exception as e:
         logger.error(f"Error creating Redis client: {e}")
 
-async def close_redis_pool():
-    global redis_connection, redis_pool
+async def close_redis_pool(redis_connection, redis_pool):
     try:
         await redis_connection.aclose()
         await redis_pool.aclose()
