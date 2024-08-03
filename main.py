@@ -39,7 +39,7 @@ def get_data(
 
     try:
         # Get all the keys
-        keys = await redis.smembers('rss_links')
+        keys = redis.smembers('rss_links')
         keys = list(keys)
         logger.info(f"Total keys: {len(keys)}")
 
@@ -49,8 +49,7 @@ def get_data(
         paginated_keys = keys[start_index:end_index]
 
         # Fetch the items corresponding to the paginated keys
-        feed_items = [await redis.hgetall(f"rss_item:{key.decode('utf-8')}") for key in paginated_keys]
-        feed_items = [{k.decode('utf-8'): v.decode('utf-8') for k, v in item.items()} for item in feed_items]
+        feed_items = [redis.hgetall(f"rss_item:{key}") for key in paginated_keys]
         logger.info(f"Values retrieved: {feed_items}")
 
         # Format the items
