@@ -53,6 +53,9 @@ async def rss(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
-    import uvicorn
+    import hypercorn
+    from hypercorn.config import Config
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    config = Config()
+    config.bind = ["0.0.0.0:8080"]
+    asyncio.run(hypercorn.asyncio.serve(app, config))
