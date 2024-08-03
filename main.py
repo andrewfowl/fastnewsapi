@@ -42,9 +42,17 @@ async def rss(
     try:
         start = (page - 1) * page_size
         end = start + page_size - 1
-        keys = redis_client.smembers('rss_links')
-        feed_items = []
-        feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
+
+        # Use a sorted set for pagination
+        feed_ids = await redis_client.zrevrange('rss_feed', start, end)
+
+        # Fetch all items by their IDs asynchronously
+        async def get_feed_item(feed_id):
+            return await redis_client.hgetall(f'rss_feed_item:{feed_id}')
+
+        tasks = [get_feed_item(feed_id) for feed_id in feed_ids]
+        feed_items = await asyncio.gather(*tasks)
+
         logger.info(f"Values retrieved: {feed_items}")
         return feed_items
     except (ConnectionError, DataError, RedisError, ResponseError) as e:
