@@ -36,7 +36,7 @@ async def get_redis_connection():
         yield redis_connection
 
 @app.get("/rss", response_model=List[str])
-async def rss(
+def rss(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
     redis=Depends(get_redis_connection)
