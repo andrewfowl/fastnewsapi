@@ -19,7 +19,6 @@ async def startup_event():
     global redis_pool, redis_connection
     try: 
         [redis_pool, redis_connection] = await init_redis_pool()
-        yield redis_connection
     except Exception as e:
         logger.error(f"Redis connection not initialized on startup. Error: {e}")
     finally:
@@ -31,11 +30,15 @@ async def shutdown_event():
     await close_redis_pool(redis_connection, redis_pool)
     return
 
+async def get_redis_connection():
+    global redis_connection
+    yield redis_connection
+
 @app.get("/rss", response_model=List[str])
 async def rss(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    redis=redis_connection
+    redis=Depends(get_redis_connection)
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     feed_items = []
