@@ -34,7 +34,7 @@ async def startup_event():
             await redis_client.ft('idx').create_index([
                 ('title', 'TEXT'),
                 ('link', 'TEXT'),
-                ('published', 'TEXT'),
+                ('published', 'DATETIME'),
                 ('summary', 'TEXT'),
             ])
         else:
