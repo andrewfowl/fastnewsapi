@@ -7,9 +7,9 @@ from pagination import paginate
 from typing import List
 import logging
 
+redis_connection=None
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 app = FastAPI()
 
 @app.on_event("startup")
@@ -17,11 +17,11 @@ async def startup_event():
     global redis_connection
     try: 
         redis_connection = await init_redis_pool()
-        return redis_connection
     except Exception as e:
         logger.error(f"Redis connection not initialized on startup. Error: {e}")
     finally:
         pass
+    return redis_connection
 
 @app.on_event("shutdown")
 async def shutdown_event():
