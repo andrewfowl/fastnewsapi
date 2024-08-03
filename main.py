@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI, Depends, Query, HTTPException
 from redis_client import init_redis_pool, close_redis_pool
-from redis.commands.search.query import Query
+from redis.commands.search.query import Query as rQuery
 from pagination import paginate
 from typing import List
 import logging
@@ -40,7 +40,7 @@ async def rss(
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     feed_items = []
-    q = Query("*").sort_by(start=page, num=page_size, name="published", asc=False)
+    q = rQuery("*").sort_by(start=page, num=page_size, name="published", asc=False)
     feed_items = redis.ft().search(q).docs
     logger.info(f"Values retrieved: {feed_items}")
     # Format the items
