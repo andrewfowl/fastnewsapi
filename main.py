@@ -61,7 +61,7 @@ async def rss(
             for feed_item in feed_items
         ]
 
-        return formatted_items
+    return formatted_items
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
