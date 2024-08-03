@@ -11,7 +11,7 @@ async def init_redis_pool():
     redis_host = os.getenv("REDISHOST")
     redis_pass = os.getenv("REDIS_PASSWORD")
     try:
-        redis_pool = redis.ConnectionPool(host=redis_host,port=redis_port,password=redis_pass,decode_responses=True,ssl_cert_reqs=None)
+        redis_pool = redis.ConnectionPool(host=redis_host,port=redis_port,password=redis_pass,decode_responses=True)
         redis_connection = redis.StrictRedis(connection_pool=redis_pool)
         logger.info(f"Redis client created for {redis_url}")
         test_connection = await redis_connection.ping()
