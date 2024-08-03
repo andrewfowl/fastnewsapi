@@ -30,11 +30,6 @@ def get_redis_connection(redis=Depends(get_redis)):
     finally:
         pass  
 
-class News(SQLModel):
-    title: str = Field(default=None, nullable=True)
-    link: str = Field(default=None, nullable=True)
-    published: date = Field(default=None, nullable=True)
-    summary: str = Field(default=None, nullable=True)
 
 @app.get("/rss", response_model=List[str])
 async def rss(
