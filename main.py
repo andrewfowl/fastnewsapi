@@ -24,8 +24,8 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    global redis_pool, redis_connection
-    await close_redis_pool(redis_connection, redis_pool)
+    global redis_connection
+    await close_redis_pool(redis_connection)
     return
 
 async def get_redis_connection():
