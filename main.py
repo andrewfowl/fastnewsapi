@@ -13,9 +13,7 @@ redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 
 # Initialize Redis pool using redis.asyncio for asyncio compatibility
-redis_pool = ConnectionPool.from_url(
-    f"redis://{redis_host}:{redis_port}", password=redis_pass, decode_responses=True
-)
+redis_pool = ConnectionPool.from_url(redis_url, decode_responses=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
