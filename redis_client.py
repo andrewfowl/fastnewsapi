@@ -5,7 +5,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-
 async def init_redis_pool():
     global redis_connection, redis_pool
     redis_url = os.getenv("REDIS_URL")
@@ -18,7 +17,7 @@ async def init_redis_pool():
         logger.info(f"Redis client created for {redis_url}")
         test_connection = await redis_connection.ping()
         logger.info(f"Redis connection test: {test_connection}")
-        return redis_connection 
+        return [redis_pool, redis_connection]
     except Exception as e:
         logger.error(f"Error creating Redis client: {e}")
 
