@@ -1,22 +1,19 @@
 import os
 import asyncio
-import aioredis
-from fastapi import FastAPI, Depends, Query, HTTPException, BackgroundTasks
-import httpx
-from aioredis.exceptions import ResponseError
+from fastapi import FastAPI, Query, HTTPException
+from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
-from pagination import paginate
 from typing import List
 import logging
 
 redis_url = os.getenv("REDIS_URL")
-redis_port = int(os.getenv("REDISPORT", 6379))  # Ensure redis_port is an integer
+redis_port = int(os.getenv("REDISPORT", 6379))
 redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 
-# Initialize Redis pool using aioredis for asyncio compatibility
-redis_pool = aioredis.ConnectionPool.from_url(
+# Initialize Redis pool using redis.asyncio for asyncio compatibility
+redis_pool = ConnectionPool.from_url(
     f"redis://{redis_host}:{redis_port}", password=redis_pass, decode_responses=True
 )
 
@@ -27,7 +24,7 @@ app = FastAPI()
 @app.on_event("startup")
 async def startup_event():
     global redis_pool, redis_client
-    redis_client = aioredis.Redis(connection_pool=redis_pool)
+    redis_client = Redis(connection_pool=redis_pool)
     return
 
 @app.on_event("shutdown")
