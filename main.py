@@ -1,68 +1,58 @@
+import os
 import asyncio
-from fastapi import FastAPI, Depends, Query, HTTPException
-from redis_client import init_redis_pool, close_redis_pool
+import aioredis
+from fastapi import FastAPI, Depends, Query, HTTPException, BackgroundTasks
+import httpx
+from aioredis.exceptions import ResponseError
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
 from pagination import paginate
 from typing import List
 import logging
 
-redis_connection=None
+redis_url = os.getenv("REDIS_URL")
+redis_port = int(os.getenv("REDISPORT", 6379))  # Ensure redis_port is an integer
+redis_host = os.getenv("REDISHOST")
+redis_pass = os.getenv("REDIS_PASSWORD")
+
+# Initialize Redis pool using aioredis for asyncio compatibility
+redis_pool = aioredis.ConnectionPool.from_url(
+    f"redis://{redis_host}:{redis_port}", password=redis_pass, decode_responses=True
+)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    global redis_connection
-    try: 
-        redis_connection = await init_redis_pool()
-    except Exception as e:
-        logger.error(f"Redis connection not initialized on startup. Error: {e}")
-    finally:
-        pass
-    return redis_connection
+    global redis_pool, redis_client
+    redis_client = aioredis.Redis(connection_pool=redis_pool)
+    return
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    global redis_connection
-    if redis_connection:
-        redis_connection = await close_redis_pool(redis_connection)
-    return redis_connection
-
-async def get_redis_connection():
-    global redis_connection
-    if redis_connection:
-        yield redis_connection
+    global redis_pool, redis_client
+    await redis_client.close()
+    await redis_pool.disconnect()
+    return
 
 @app.get("/rss", response_model=List[str])
-def rss(
+async def rss(
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    redis=Depends(get_redis_connection)
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
-    feed_items = []
-    q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
-    feed_items = redis.ft().search(q).docs
-    logger.info(f"Values retrieved: {feed_items}")
-    # Format the items
-    formatted_items = [
-            {
-                'title': item.get('title', 'No title'),
-                'link': item.get('link', 'No link'),
-                'published': item.get('published', 'No date'),
-                'summary': item.get('summary', 'No summary')
-            }
-            for feed_item in feed_items
-        ]
-
-    return formatted_items
+    try:
+        q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
+        feed_items = await redis_client.ft().search(q).docs
+        logger.info(f"Values retrieved: {feed_items}")
+        return [item.json() for item in feed_items]
+    except (ConnectionError, DataError, NoScriptError, RedisError, ResponseError) as e:
+        logger.error(f"Redis error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
-    import hypercorn.asyncio
-    from hypercorn.config import Config
+    import uvicorn
 
-    config = Config()
-    config.bind = ["0.0.0.0:8080"]
-    hypercorn.asyncio.run(app, config)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
