@@ -38,11 +38,8 @@ async def rss(
     redis=Depends(get_redis_connection)
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
-
-    schema = (TextField("$.title", as_name="name"), TextField("$.link", as_name="link"), TextField("$.published", as_name="published"), TextField("$.summary", as_name="summary"))
-    redis.ft().create_index(schema, definition=IndexDefinition(prefix=["news:"], index_type=IndexType.JSON))
-    q = Query("*").paging(page, page_size).sort_by("published", asc=False)
     feed_items = []
+    q = Query("*").paging(page, page_size).sort_by("published", asc=False)
     feed_items = redis.ft().search(q).docs
     logger.info(f"Values retrieved: {feed_items}")
     # Format the items
