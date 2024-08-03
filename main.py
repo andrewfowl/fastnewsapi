@@ -45,12 +45,8 @@ def get_data(
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-    decoded_values = []
-    for item in feed_items:
-        if item is not None:
-            decoded_values.append(item.decode('utf-8'))
     
-    paginated_values = paginate(decoded_values, page, page_size)
+    paginated_values = paginate(feed_items, page, page_size)
     logger.debug(f"Paginated values: {paginated_values}")
     
     return paginated_values
