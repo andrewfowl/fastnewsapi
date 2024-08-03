@@ -13,7 +13,7 @@ redis_pool = redis.ConnectionPool(
             port=redis_port,
             password=redis_pass,
             decode_responses=True,
-            ssl_cert_reqs=none
+            ssl_cert_reqs=None
         )
 redis_connection = None
 
