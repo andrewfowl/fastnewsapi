@@ -23,7 +23,7 @@ async def shutdown_event():
 
 async def get_redis_connection():
     try:
-        if redis_connection=None:            
+        if redis_connection==None:            
           await redis_client.init_redis_pool()
         yield redis_connection
     except Exception as e:
