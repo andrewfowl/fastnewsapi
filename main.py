@@ -23,7 +23,8 @@ app = FastAPI()
 async def startup_event():
     global redis_pool, redis_client
     redis_client = Redis(connection_pool=redis_pool)
-    logger.info("Redis client initialized")
+    test_connection = await redis_client.ping()
+    logger.info(f"Redis client initialized: {test_connection}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
