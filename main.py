@@ -38,18 +38,36 @@ def get_data(
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
 
     try:
-        keys = redis_client.smembers('rss_links')
-        feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
+        # Get all the keys
+        keys = await redis.smembers('rss_links')
+        keys = list(keys)
+        logger.info(f"Total keys: {len(keys)}")
+
+        # Paginate the keys
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_keys = keys[start_index:end_index]
+
+        # Fetch the items corresponding to the paginated keys
+        feed_items = [await redis.hgetall(f"rss_item:{key.decode('utf-8')}") for key in paginated_keys]
+        feed_items = [{k.decode('utf-8'): v.decode('utf-8') for k, v in item.items()} for item in feed_items]
         logger.info(f"Values retrieved: {feed_items}")
+
+        # Format the items
+        formatted_items = [
+            {
+                'title': item.get('title', 'No title'),
+                'link': item.get('link', 'No link'),
+                'published': item.get('published', 'No date'),
+                'summary': item.get('summary', 'No summary')
+            }
+            for item in feed_items
+        ]
+
+        return formatted_items
     except Exception as e:
         logger.error(f"Error fetching data from Redis: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
-    
-    paginated_values = paginate(feed_items, page, page_size)
-    logger.debug(f"Paginated values: {paginated_values}")
-    
-    return paginated_values
 
 if __name__ == "__main__":
     import hypercorn.asyncio
