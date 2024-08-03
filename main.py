@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import FastAPI, Depends, Query, HTTPException
-import redis_client
+from redis_client import init_redis_pool, close_redis_pool
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
 from pagination import paginate
@@ -9,33 +9,33 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-redis_connection = redis_client.redis_connection
+redis_connection=None
+redis_pool=None
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    await redis_client.init_redis_pool()
+    global redis_pool, redis_connection
+    try: 
+        [redis_pool, redis_connection] = await init_redis_pool()
+        yield redis_connection
+    except Exception as e:
+        logger.error(f"Redis connection not initialized on startup. Error: {e}")
+    finally:
+        pass
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await redis_client.close_redis_pool()
-
-async def get_redis_connection():
-    try:
-        if redis_connection==None:            
-          await redis_client.init_redis_pool()
-        yield redis_connection
-    except Exception as e:
-        logger.error(f"Redis connection not initialized when accessed. Error: {e}")
-    finally:
-        pass
+    global redis_pool, redis_connection
+    await close_redis_pool(redis_connection, redis_pool)
+    return
 
 @app.get("/rss", response_model=List[str])
 async def rss(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    redis=Depends(get_redis_connection)
+    redis=redis_connection
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     feed_items = []
