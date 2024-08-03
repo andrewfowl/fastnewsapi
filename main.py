@@ -42,7 +42,7 @@ async def rss(
     try:
         start = (page - 1) * page_size
         end = start + page_size - 1
-        feed_ids = redis_client.smembers('rss_links')
+        keys = redis_client.smembers('rss_links')
         feed_items = []
         feed_items = [redis_client.hgetall(f"rss_item:{key}") for key in keys]
         logger.info(f"Values retrieved: {feed_items}")
