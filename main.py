@@ -27,12 +27,13 @@ async def startup_event():
 async def shutdown_event():
     global redis_connection
     if redis_connection:
-        await close_redis_pool(redis_connection)
-    return
+        redis_connection = await close_redis_pool(redis_connection)
+    return redis_connection
 
 async def get_redis_connection():
     global redis_connection
-    yield redis_connection
+    if redis_connection:
+        yield redis_connection
 
 @app.get("/rss", response_model=List[str])
 async def rss(
@@ -43,7 +44,7 @@ async def rss(
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     feed_items = []
     q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
-    feed_items = await redis.ft().search(q).docs
+    feed_items = redis.ft().search(q).docs
     logger.info(f"Values retrieved: {feed_items}")
     # Format the items
     formatted_items = [
