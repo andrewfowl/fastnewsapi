@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import FastAPI, Depends, Query, HTTPException
-from redis_client import init_redis_pool, close_redis_pool
+import redis_client
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
 from pagination import paginate
@@ -15,14 +15,16 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    await init_redis_pool()
+    await redis_client.init_redis_pool()
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await close_redis_pool()
+    await redis_client.close_redis_pool()
 
-def get_redis_connection():
+async def get_redis_connection():
     try:
+        if redis_connection=None:            
+          await redis_client.init_redis_pool()
         yield redis_connection
     except Exception as e:
         logger.error(f"Redis connection not initialized when accessed. Error: {e}")
