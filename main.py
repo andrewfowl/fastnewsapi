@@ -14,6 +14,7 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
+    global redis_connection
     try: 
         redis_connection = await init_redis_pool()
         return redis_connection
