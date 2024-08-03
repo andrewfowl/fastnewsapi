@@ -24,22 +24,6 @@ async def startup_event():
     global redis_pool, redis_client
     redis_client = Redis(connection_pool=redis_pool)
     logger.info("Redis client initialized")
-    # Ensure index exists
-    try:
-        await redis_client.ft('idx').info()
-        logger.info("Index already exists")
-    except ResponseError as e:
-        if "Unknown Index name" in str(e):
-            logger.info("Index does not exist, creating...")
-            await redis_client.ft('idx').create_index([
-                ('title', 'TEXT'),
-                ('link', 'TEXT'),
-                ('published', 'DATETIME'),
-                ('summary', 'TEXT'),
-            ])
-        else:
-            raise e
-    return
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -47,7 +31,6 @@ async def shutdown_event():
     await redis_client.close()
     await redis_pool.disconnect()
     logger.info("Redis client closed")
-    return
 
 @app.get("/rss", response_model=List[str])
 async def rss(
@@ -56,14 +39,18 @@ async def rss(
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     try:
-        q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
-        logger.debug(f"Query constructed: {q}")
-        result = await redis_client.ft('idx').search(q)
-        logger.info(f"Search result: {result}")
-        feed_items = result.docs
+        start = (page - 1) * page_size
+        end = start + page_size - 1
+        feed_ids = await redis_client.zrevrange('rss_feed', start, end)
+        
+        feed_items = []
+        for feed_id in feed_ids:
+            feed_item = await redis_client.hgetall(f'rss_feed_item:{feed_id}')
+            feed_items.append(feed_item)
+
         logger.info(f"Values retrieved: {feed_items}")
-        return [item.json() for item in feed_items]
-    except (ConnectionError, DataError, NoScriptError, RedisError, ResponseError) as e:
+        return feed_items
+    except (ConnectionError, DataError, RedisError, ResponseError) as e:
         logger.error(f"Redis error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
     except Exception as e:
