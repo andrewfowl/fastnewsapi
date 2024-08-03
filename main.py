@@ -24,6 +24,21 @@ async def startup_event():
     global redis_pool, redis_client
     redis_client = Redis(connection_pool=redis_pool)
     logger.info("Redis client initialized")
+    # Ensure index exists
+    try:
+        await redis_client.ft('idx').info()
+        logger.info("Index already exists")
+    except ResponseError as e:
+        if "Unknown Index name" in str(e):
+            logger.info("Index does not exist, creating...")
+            await redis_client.ft('idx').create_index([
+                ('title', 'TEXT'),
+                ('link', 'TEXT'),
+                ('published', 'TEXT'),
+                ('summary', 'TEXT'),
+            ])
+        else:
+            raise e
     return
 
 @app.on_event("shutdown")
@@ -43,7 +58,7 @@ async def rss(
     try:
         q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
         logger.debug(f"Query constructed: {q}")
-        result = await redis_client.ft().search(q)
+        result = await redis_client.ft('idx').search(q)
         logger.info(f"Search result: {result}")
         feed_items = result.docs
         logger.info(f"Values retrieved: {feed_items}")
@@ -54,6 +69,7 @@ async def rss(
     except Exception as e:
         logger.error(f"Unhandled error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 if __name__ == "__main__":
     import hypercorn
