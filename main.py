@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import FastAPI, Depends, Query, HTTPException
 from redis_client import init_redis_pool, close_redis_pool
+from redis.commands.search.query import Query
 from pagination import paginate
 from typing import List
 import logging
