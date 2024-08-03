@@ -23,6 +23,7 @@ app = FastAPI()
 async def startup_event():
     global redis_pool, redis_client
     redis_client = Redis(connection_pool=redis_pool)
+    logger.info("Redis client initialized")
     return
 
 @app.on_event("shutdown")
@@ -30,6 +31,7 @@ async def shutdown_event():
     global redis_pool, redis_client
     await redis_client.close()
     await redis_pool.disconnect()
+    logger.info("Redis client closed")
     return
 
 @app.get("/rss", response_model=List[str])
@@ -40,11 +42,17 @@ async def rss(
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     try:
         q = rQuery("*").paging(page, page_size).sort_by("published", asc=False)
-        feed_items = await redis_client.ft().search(q).docs
+        logger.debug(f"Query constructed: {q}")
+        result = await redis_client.ft().search(q)
+        logger.info(f"Search result: {result}")
+        feed_items = result.docs
         logger.info(f"Values retrieved: {feed_items}")
         return [item.json() for item in feed_items]
     except (ConnectionError, DataError, NoScriptError, RedisError, ResponseError) as e:
         logger.error(f"Redis error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    except Exception as e:
+        logger.error(f"Unhandled error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
