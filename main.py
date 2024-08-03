@@ -39,7 +39,7 @@ async def rss(
 ):
     logger.info(f"Received request for page: {page}, page_size: {page_size}")
     feed_items = []
-    q = Query("*").paging(page, page_size).sort_by("published", asc=False)
+    q = Query("*").sort_by(start=page, num=page_size, name="published", asc=False)
     feed_items = redis.ft().search(q).docs
     logger.info(f"Values retrieved: {feed_items}")
     # Format the items
