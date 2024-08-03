@@ -9,16 +9,14 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-redis_connection=None
-redis_pool=None
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    global redis_pool, redis_connection
     try: 
-        [redis_pool, redis_connection] = await init_redis_pool()
+        redis_connection = await init_redis_pool()
+        return redis_connection
     except Exception as e:
         logger.error(f"Redis connection not initialized on startup. Error: {e}")
     finally:
