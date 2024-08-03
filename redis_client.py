@@ -25,7 +25,7 @@ def init_redis_pool():
     except Exception as e:
         logger.error(f"Error creating Redis client: {e}")
 
-def close_redis_pool():
+async def close_redis_pool():
     global redis_connection, redis_pool
     try:
         await redis_connection.aclose()
