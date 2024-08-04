@@ -71,7 +71,7 @@ class RedisManager:
     async def query_rss_feed(cls, start: int, end: int) -> Dict[str, List[Dict[str, str]]]:
         try:
             logging.info(f"Querying RSS feed from {start} to {end}")
-            data = await get_feed_ids(cls.redis_client)
+            data = await get_feed_ids(cls.redis_client, start, end)
             total_items = len(data)
             feed_items = data[start:end]
             logging.info(f"Retrieved feed items: {feed_items}")
