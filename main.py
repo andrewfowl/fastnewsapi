@@ -21,7 +21,6 @@ redis_pass = os.getenv("REDIS_PASSWORD")
 logging.basicConfig(level=logging.INFO)
 
 async def get_data(redis_client, key):
-    logging.info(f"Fetching data for key: {key}")
     data = {
         "published": await redis_client.hget(key, "published"),
         "link": await redis_client.hget(key, "link"),
@@ -52,10 +51,12 @@ class RedisManager:
     ):
         try:
             cls.redis_client = redis.Redis(host=host, port=port, username=username, password=password, decode_responses=True)
-            # cls.redis_client = redis.StrictRedis(host=host, port=port, username=username, password=password, decode_responses=True, db=1)
             logging.info("Connected to Redis")
             test_ping = await cls.redis_client.ping()  # Test connection
-            logging.info(f"Successfull ping client: {test_ping}")
+            if test_ping:
+                logging.info("Connected to Redis")
+            else:
+                logging.error("Not connected to Redis")
         except redis.RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
             raise
@@ -81,18 +82,16 @@ class RedisManager:
 
 async def run_redis():
     await RedisManager.connect()
-    logging.info("run_redis >> RedisManager.connect() status: success")
     return RedisManager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.info("Starting application lifespan")
+    logging.info("Start application lifespan")
     logging.info(isinstance(app.state,State))
     app.state.redis_manager = await run_redis()
     yield
-    logging.info("Ending application lifespan")
     await RedisManager.close()
-    logging.info("Closed RedisManager and ended lifespan")
+    logging.info("End application lifespan")
 
 app = FastAPI(lifespan=lifespan)
 
