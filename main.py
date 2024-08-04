@@ -45,7 +45,7 @@ class RedisManager:
         cls, host: str = redis_host, port: int = redis_port, username: str = "default", password=redis_pass
     ):
         try:
-            cls.redis_client = redis.asyncio.Redis(
+            cls.redis_client = redis.Redis(
                 host=host, port=port, username=username, password=password, decode_responses=True
             )
             logging.info("Connected to Redis")
@@ -66,7 +66,7 @@ class RedisManager:
         try:
             feed_ids = await get_feed_ids(cls.redis_client, start, end)
             logging.info(f"Retrieved feed_ids: {feed_ids}")
-            tasks = [cls.redis_client.hgetall(f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
+            tasks = [get_data(cls.redis_client, f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
             feed_items = await asyncio.gather(*tasks)
             logging.info(f"Retrieved feed_items: {feed_items}")
             return feed_items
