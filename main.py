@@ -67,15 +67,14 @@ class RedisManager:
             logging.info("Redis connection closed")
 
     @classmethod
-    async def query_rss_feed(cls, start: int, end: int) -> List[Dict[str, str]]:
+    async def query_rss_feed(cls, start: int, end: int) -> Dict[str, List[Dict[str, str]]]:
         try:
             logging.info(f"Querying RSS feed from {start} to {end}")
-            feed_items = await get_feed_ids(cls.redis_client, start, end)
+            data = await get_feed_ids(cls.redis_client)
+            total_items = len(data)
+            feed_items = data[start:end]
             logging.info(f"Retrieved feed items: {feed_items}")
-            #tasks = [get_data(cls.redis_client, f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
-            #feed_items = await asyncio.gather(*tasks)
-            logging.info(f"Retrieved feed_items: {feed_items}")
-            return feed_items
+            return {"total_items": total_items, "items": feed_items}
         except redis.RedisError as e:
             logging.error(f"Failed to query RSS feed from Redis: {e}")
             raise
@@ -107,8 +106,19 @@ async def get_rss(
     start = (page - 1) * page_size
     end = start + page_size
     try:
-        feed_items = await redis_manager.query_rss_feed(start, end)
-        return JSONResponse({"data": feed_items, "dt": datetime.now().isoformat()})
+        result = await redis_manager.query_rss_feed(start, end)
+        feed_items = result["items"]
+        total_items = result["total_items"]
+        response = {
+            "data": feed_items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": (total_items + page_size - 1) // page_size,  # calculate total pages
+            "dt": datetime.now().isoformat()
+        }
+        logging.info(f"Returning feed items: {response}")
+        return JSONResponse(response)
     except HTTPException as e:
         raise e
     except Exception as e:
