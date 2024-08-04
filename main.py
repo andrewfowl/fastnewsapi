@@ -28,7 +28,6 @@ async def get_data(redis_client, key):
         "title": await redis_client.hget(key, "title"),
         "summary": await redis_client.hget(key, "summary")
     }
-    logging.info(f"Retrieved data for key {key}: {data}")
     return data
 
 async def get_feed_ids(redis_client, start_index, end_index): 
