@@ -11,6 +11,7 @@ from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisErr
 from redis.commands.search.query import Query as rQuery
 from typing import List, Dict
 import logging
+import json
 
 redis_url = os.getenv("REDIS_URL")
 redis_port = int(os.getenv("REDISPORT", 6379))
@@ -19,23 +20,21 @@ redis_pass = os.getenv("REDIS_PASSWORD")
 
 logging.basicConfig(level=logging.INFO)
 
-async def get_data(r, key):
+async def get_data(redis_client, key):
     return {
-        "published": r.hget(key, "published"),
-        "link": r.hget(key, "link"),
-        "title": r.hget(key, "title"),
-        "summary": r.hget(key, "summary")
+        "published": await redis_client.hget(key, "published"),
+        "link": await redis_client.hget(key, "link"),
+        "title": await redis_client.hget(key, "title"),
+        "summary": await redis_client.hget(key, "summary")
     }
 
 async def get_feed_ids(redis_client, start_index, end_index): 
     pattern = "rss_item:*"
     keys = await redis_client.keys(pattern)
-    data = [await get_data(key) for key in keys]
+    data = [await get_data(redis_client, key) for key in keys]
     data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%d %H:%M:%S'))
     paginated_data = data[start_index:end_index]
-    response = json.dumps(paginated_data, indent=4)
-    return response
-    
+    return paginated_data
     
 class RedisManager:
     redis_client: redis.Redis = None
