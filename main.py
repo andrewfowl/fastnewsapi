@@ -38,7 +38,7 @@ async def get_feed_ids(redis_client, start_index, end_index):
     logging.info(f"Retrieved keys: {keys}")
     data = [await get_data(redis_client, key) for key in keys]
     logging.info(f"Retrieved data for all keys: {data}")
-    data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%d %H:%M:%S'))
+    data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%dT%H:%M:%S'))
     logging.info(f"Sorted data: {data}")
     paginated_data = data[start_index:end_index]
     logging.info(f"Paginated data: {paginated_data}")
@@ -52,9 +52,8 @@ class RedisManager:
         cls, host: str = redis_host, port: int = redis_port, username: str = "default", password=redis_pass
     ):
         try:
-            cls.redis_client = redis.StrictRedis(
-                host=host, port=port, username=username, password=password, decode_responses=True, db=1
-            )
+            cls.redis_client = redis.Redis(host=host, port=port, username=username, password=password, decode_responses=True)
+            # cls.redis_client = redis.StrictRedis(host=host, port=port, username=username, password=password, decode_responses=True, db=1)
             logging.info("Connected to Redis")
             test_ping = await cls.redis_client.ping()  # Test connection
             logging.info(f"Successfull ping client: {test_ping}")
