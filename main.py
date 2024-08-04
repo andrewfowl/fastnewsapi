@@ -95,7 +95,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/rss", response_model=List[Dict[str, str]])
+@app.get("/rss", response_model=Dict[str, any])
 async def get_rss(
     request: Request,
     page: int = Query(1, ge=1, description="Page number"),
