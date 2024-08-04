@@ -69,10 +69,11 @@ class RedisManager:
     @classmethod
     async def query_rss_feed(cls, start: int, end: int) -> List[Dict[str, str]]:
         try:
-            feed_ids = await get_feed_ids(cls.redis_client, start, end)
-            logging.info(f"Retrieved feed_ids: {feed_ids}")
-            tasks = [get_data(cls.redis_client, f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
-            feed_items = await asyncio.gather(*tasks)
+            logging.info(f"Querying RSS feed from {start} to {end}")
+            feed_items = await get_feed_ids(cls.redis_client, start, end)
+            logging.info(f"Retrieved feed items: {feed_items}")
+            #tasks = [get_data(cls.redis_client, f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
+            #feed_items = await asyncio.gather(*tasks)
             logging.info(f"Retrieved feed_items: {feed_items}")
             return feed_items
         except redis.RedisError as e:
