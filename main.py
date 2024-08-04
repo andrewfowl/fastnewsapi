@@ -19,6 +19,24 @@ redis_pass = os.getenv("REDIS_PASSWORD")
 
 logging.basicConfig(level=logging.INFO)
 
+async def get_data(key):
+    return {
+        "published": r.hget(key, "published"),
+        "link": r.hget(key, "link"),
+        "title": r.hget(key, "title"),
+        "summary": r.hget(key, "summary")
+    }
+
+async def get_feed_ids(redis_client, start_index, end_index): 
+    pattern = "rss_item:*"
+    keys = await redis_client.keys(pattern)
+    data = [await get_data(key) for key in keys]
+    data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%d %H:%M:%S'))
+    paginated_data = data[start_index:end_index]
+    response = json.dumps(paginated_data, indent=4)
+    return response
+    
+    
 class RedisManager:
     redis_client: redis.Redis = None
 
@@ -27,12 +45,12 @@ class RedisManager:
         cls, host: str = redis_host, port: int = redis_port, username: str = "default", password=redis_pass
     ):
         try:
-            cls.redis_client = redis.StrictRedis(
+            cls.redis_client = redis.asyncio.Redis(
                 host=host, port=port, username=username, password=password, decode_responses=True
             )
             logging.info("Connected to Redis")
             test_ping = await cls.redis_client.ping()  # Test connection
-            logging.info(f"Successfull ping: {test_ping}")
+            logging.info(f"Successfull ping client: {test_ping}")
         except redis.RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
             raise
@@ -46,7 +64,7 @@ class RedisManager:
     @classmethod
     async def query_rss_feed(cls, start: int, end: int) -> List[Dict[str, str]]:
         try:
-            feed_ids = await cls.redis_client.zrevrange('rss_feed', start, end)
+            feed_ids = await get_feed_ids(cls.redis_client, start, end)
             logging.info(f"Retrieved feed_ids: {feed_ids}")
             tasks = [cls.redis_client.hgetall(f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
             feed_items = await asyncio.gather(*tasks)
@@ -81,16 +99,15 @@ async def get_rss(
 ):
     redis_manager: RedisManager = request.app.state.redis_manager
     start = (page - 1) * page_size
-    end = start + page_size - 1
+    end = start + page_size
     try:
         feed_items = await redis_manager.query_rss_feed(start, end)
-        
         return JSONResponse({"data": feed_items, "dt": datetime.now().isoformat()})
     except HTTPException as e:
         raise e
     except Exception as e:
         logging.error(f"Unhandled error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Error retrieving data")
 
 if __name__ == "__main__":
     import hypercorn
