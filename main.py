@@ -26,11 +26,12 @@ class RedisManager:
         cls, host: str = redis_host, port: int = redis_port, username: str = "default", password=redis_pass
     ):
         try:
-            cls.redis_client = redis.Redis(
+            cls.redis_client = redis.StrictRedis(
                 host=host, port=port, username=username, password=password, decode_responses=True
             )
-            await cls.redis_client.ping()  # Test connection
             logging.info("Connected to Redis")
+            test_ping = await cls.redis_client.ping()  # Test connection
+            logging.info(f"Successfull ping: {test_ping}")
         except redis.RedisError as e:
             logging.error(f"Failed to connect to Redis: {e}")
             raise
@@ -45,8 +46,10 @@ class RedisManager:
     async def query_rss_feed(cls, start: int, end: int) -> List[Dict[str, str]]:
         try:
             feed_ids = await cls.redis_client.zrevrange('rss_feed', start, end)
+            logging.info(f"Retrieved feed_ids: {feed_ids}")
             tasks = [cls.redis_client.hgetall(f'rss_feed_item:{feed_id}') for feed_id in feed_ids]
             feed_items = await asyncio.gather(*tasks)
+            logging.info(f"Retrieved feed_items: {feed_items}")
             return feed_items
         except redis.RedisError as e:
             logging.error(f"Failed to query RSS feed from Redis: {e}")
@@ -54,15 +57,18 @@ class RedisManager:
 
 async def run_redis():
     await RedisManager.connect()
+    logging.info("run_redis >> RedisManager.connect() status: success")
     return RedisManager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.info("Starting application lifespan")
+    logging.info(isinstance(app.state,State))
     app.state.redis_manager = await run_redis()
     yield
-    await RedisManager.close()
     logging.info("Ending application lifespan")
+    await RedisManager.close()
+    logging.info("Closed RedisManager and ended lifespan")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -77,6 +83,7 @@ async def get_rss(
     end = start + page_size - 1
     try:
         feed_items = await redis_manager.query_rss_feed(start, end)
+        
         return JSONResponse({"data": feed_items, "dt": datetime.now().isoformat()})
     except HTTPException as e:
         raise e
