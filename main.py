@@ -29,18 +29,19 @@ async def get_data(redis_client, key):
     }
     return data
 
-async def get_feed_ids(redis_client, start_index, end_index): 
+#async def get_feed_ids(redis_client, start_index, end_index): 
+async def get_feed_ids(redis_client): 
     pattern = "rss_item:*"
     logging.info(f"Fetching keys with pattern: {pattern}")
     keys = await redis_client.keys(pattern)
     logging.info(f"Retrieved keys: {keys}")
     data = [await get_data(redis_client, key) for key in keys]
     logging.info(f"Retrieved data for all keys: {data}")
-    data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%dT%H:%M:%S'))
+    result = data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%dT%H:%M:%S'))
     logging.info(f"Sorted data: {data}")
-    paginated_data = data[start_index:end_index]
-    logging.info(f"Paginated data: {paginated_data}")
-    return paginated_data
+   # paginated_data = data[start_index:end_index]
+    logging.info(f"Paginated data: {result}")
+    return result
     
 class RedisManager:
     redis_client: redis.Redis = None
@@ -71,7 +72,8 @@ class RedisManager:
     async def query_rss_feed(cls, start: int, end: int) -> Dict[str, List[Dict[str, str]]]:
         try:
             logging.info(f"Querying RSS feed from {start} to {end}")
-            data = await get_feed_ids(cls.redis_client, start, end)
+            #data = await get_feed_ids(cls.redis_client, start, end)
+            data = await get_feed_ids(cls.redis_client)
             total_items = len(data)
             feed_items = data[start:end]
             logging.info(f"Retrieved feed items: {feed_items}")
