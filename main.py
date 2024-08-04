@@ -21,19 +21,27 @@ redis_pass = os.getenv("REDIS_PASSWORD")
 logging.basicConfig(level=logging.INFO)
 
 async def get_data(redis_client, key):
-    return {
+    logging.info(f"Fetching data for key: {key}")
+    data = {
         "published": await redis_client.hget(key, "published"),
         "link": await redis_client.hget(key, "link"),
         "title": await redis_client.hget(key, "title"),
         "summary": await redis_client.hget(key, "summary")
     }
+    logging.info(f"Retrieved data for key {key}: {data}")
+    return data
 
 async def get_feed_ids(redis_client, start_index, end_index): 
     pattern = "rss_item:*"
+    logging.info(f"Fetching keys with pattern: {pattern}")
     keys = await redis_client.keys(pattern)
+    logging.info(f"Retrieved keys: {keys}")
     data = [await get_data(redis_client, key) for key in keys]
+    logging.info(f"Retrieved data for all keys: {data}")
     data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%d %H:%M:%S'))
+    logging.info(f"Sorted data: {data}")
     paginated_data = data[start_index:end_index]
+    logging.info(f"Paginated data: {paginated_data}")
     return paginated_data
     
 class RedisManager:
@@ -45,7 +53,7 @@ class RedisManager:
     ):
         try:
             cls.redis_client = redis.StrictRedis(
-                host=host, port=port, username=username, password=password, decode_responses=True
+                host=host, port=port, username=username, password=password, decode_responses=True, db=1
             )
             logging.info("Connected to Redis")
             test_ping = await cls.redis_client.ping()  # Test connection
