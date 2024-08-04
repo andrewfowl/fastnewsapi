@@ -13,6 +13,16 @@ from typing import List, Dict, Any
 import logging
 import json
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+# Allow all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 redis_url = os.getenv("REDIS_URL")
 redis_port = int(os.getenv("REDISPORT", 6379))
