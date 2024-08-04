@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 import logging
 import json
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 
 redis_url = os.getenv("REDIS_URL")
 redis_port = int(os.getenv("REDISPORT", 6379))
@@ -114,13 +114,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Allow all origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# app.add_middleware(CORSMiddleware,    allow_origins=["*"],    allow_credentials=True,    allow_methods=["*"],    allow_headers=["*"],)
 
 @app.get("/rss", response_model=ModelOut)
 async def get_rss(
