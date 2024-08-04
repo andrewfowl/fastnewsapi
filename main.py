@@ -19,7 +19,7 @@ redis_pass = os.getenv("REDIS_PASSWORD")
 
 logging.basicConfig(level=logging.INFO)
 
-async def get_data(key):
+async def get_data(r, key):
     return {
         "published": r.hget(key, "published"),
         "link": r.hget(key, "link"),
