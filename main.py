@@ -44,7 +44,7 @@ class RedisManager:
         cls, host: str = redis_host, port: int = redis_port, username: str = "default", password=redis_pass
     ):
         try:
-            cls.redis_client = redis.Redis(
+            cls.redis_client = redis.StrictRedis(
                 host=host, port=port, username=username, password=password, decode_responses=True
             )
             logging.info("Connected to Redis")
