@@ -9,9 +9,10 @@ from contextlib import asynccontextmanager
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
-from typing import List, Dict
+from typing import List, Dict, Any
 import logging
 import json
+from pydantic import BaseModel
 
 redis_url = os.getenv("REDIS_URL")
 redis_port = int(os.getenv("REDISPORT", 6379))
@@ -19,6 +20,20 @@ redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 
 logging.basicConfig(level=logging.INFO)
+
+class Item(BaseModel):
+    published: datetime | None = None
+    link: str | None = None
+    title: str | None = None
+    summary: str | None = None
+
+class ModelOut(BaseModel):
+    data: List[Item]
+    page: int
+    page_size: int
+    total_items: int
+    total_pages: int
+    dt: str
 
 async def get_data(redis_client, key):
     data = {
@@ -97,7 +112,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/rss", response_model=None)
+@app.get("/rss", response_model=ModelOut)
 async def get_rss(
     request: Request,
     page: int = Query(1, ge=1, description="Page number"),
