@@ -52,10 +52,10 @@ async def get_feed_ids(redis_client):
     logging.info(f"Retrieved keys: {keys}")
     data = [await get_data(redis_client, key) for key in keys]
     logging.info(f"Retrieved data for all keys: {data}")
-    result = data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%dT%H:%M:%S'))
+    data.sort(key=lambda x: datetime.strptime(x['published'], '%Y-%m-%dT%H:%M:%S'))
     logging.info(f"Sorted data: {data}")
-   # paginated_data = data[start_index:end_index]
-    logging.info(f"Paginated data: {result}")
+    result = data
+    logging.info(f"Result data: {result}")
     return result
     
 class RedisManager:
