@@ -4,7 +4,7 @@ import redis.asyncio as redis
 from datetime import datetime
 from fastapi.responses import JSONResponse
 from fastapi.datastructures import State
-from fastapi import FastAPI, Request, Query, HTTPException
+from fastapi import FastAPI, Request, Query, HTTPException, Response
 from contextlib import asynccontextmanager
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
@@ -125,6 +125,7 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/rss", response_model=ModelOut)
 async def get_rss(
     request: Request,
+    response: Response,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
 ):
@@ -135,7 +136,7 @@ async def get_rss(
         result = await redis_manager.query_rss_feed(start, end)
         feed_items = result["items"]
         total_items = result["total_items"]
-        response = {
+        response_data = {
             "data": feed_items,
             "page": page,
             "page_size": page_size,
@@ -143,8 +144,9 @@ async def get_rss(
             "total_pages": (total_items + page_size - 1) // page_size,  # calculate total pages
             "dt": datetime.now().isoformat()
         }
-        logging.info(f"Returning feed items: {response}")
-        return JSONResponse(response)
+        logging.info(f"Returning feed items: {response_data}")
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return JSONResponse(content=response_data, headers=response.headers)
     except HTTPException as e:
         raise e
     except Exception as e:
