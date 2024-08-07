@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 import logging
 import json
 from pydantic import BaseModel
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 redis_url = os.getenv("REDIS_URL")
 redis_port = int(os.getenv("REDISPORT", 6379))
@@ -21,6 +21,7 @@ redis_host = os.getenv("REDISHOST")
 redis_pass = os.getenv("REDIS_PASSWORD")
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("fastapinews")
 
 class Item(BaseModel):
     published: datetime | None = None
@@ -45,7 +46,6 @@ async def get_data(redis_client, key):
     }
     return data
 
-#async def get_feed_ids(redis_client, start_index, end_index): 
 async def get_feed_ids(redis_client): 
     pattern = "rss_item:*"
     logging.info(f"Fetching keys with pattern: {pattern}")
@@ -114,7 +114,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Allow all origins
-# app.add_middleware(CORSMiddleware,    allow_origins=["*"],    allow_credentials=True,    allow_methods=["*"],    allow_headers=["*"],)
+app.add_middleware(
+    CORSMiddleware,   
+    allow_credentials=True,    
+    allow_methods=["*"],    
+    allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "*.app.github.dev",
+        "*"
+    ],    
+)
 
 @app.get("/rss", response_model=ModelOut)
 async def get_rss(
