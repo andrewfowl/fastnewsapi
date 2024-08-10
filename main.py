@@ -1,15 +1,16 @@
 import os
+import time
 import asyncio
 import redis.asyncio as redis
 from datetime import datetime
 from fastapi.responses import JSONResponse
 from fastapi.datastructures import State
-from fastapi import FastAPI, Request, Query, HTTPException, Response
+from fastapi import FastAPI, Request, Query, HTTPException, Response, Path
 from contextlib import asynccontextmanager
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError, DataError, NoScriptError, RedisError, ResponseError
 from redis.commands.search.query import Query as rQuery
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable, TypeVar
 import logging
 import json
 from pydantic import BaseModel
@@ -125,6 +126,26 @@ app.add_middleware(
         "*"
     ],    
 )
+
+F=TypeVar("F", bound=Callable[..., Any])
+
+@app.middleware("http")
+async def process_time_log_middleware(request: Request, call_next: F) -> Response:
+    """
+    Add API process time in response headers and log calls
+    """
+    start_time = time.time()
+    response: Response = await call_next(request)
+    process_time = str(round(time.time() -- start_time, 3))
+    response.headers["X-Process-Time"] = process_time
+    logger.info(
+        "Method=%s Path=%s StatusCode=%s ProcessTime=%s",
+        request.method,
+        request.url.path,
+        response.status_code,
+        process_time
+    )
+    return response
 
 @app.get("/rss", response_model=ModelOut)
 async def get_rss(
