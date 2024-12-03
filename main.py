@@ -123,6 +123,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "*.app.github.dev",
+        "*.rapidapi.com",
         "*"
     ],    
 )
